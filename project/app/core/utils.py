@@ -61,7 +61,6 @@ def safe_execute(
     error_message: Optional[str] = None,
     **kwargs: Any,
 ) -> Any:
-    """Execute a callable safely, logging exceptions without crashing the view."""
     try:
         return func(*args, **kwargs)
     except Exception as exc:

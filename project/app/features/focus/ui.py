@@ -1,17 +1,7 @@
-"""UI presentation layer for Feature 1 (Focus Timer).
-
-Owned exclusively by Developer 1 on branch `feature/focus-timer`.
-"""
+"""UI presentation layer for Feature 1 (Focus Timer)."""
 
 import time
-from typing import Optional
-
-try:
-    import streamlit as st
-    _HAS_STREAMLIT = True
-except ImportError:
-    _HAS_STREAMLIT = False
-    st = None
+import streamlit as st
 
 from app.core.components import (
     render_alert,
@@ -32,19 +22,12 @@ from app.features.focus import service
 
 
 def render() -> None:
-    """Main rendering entry point for the Focus Timer feature."""
     render_header(
         title="Focus Timer",
         subtitle="Distraction-free countdown intervals to maintain momentum and deep focus.",
         icon="⏱️",
     )
 
-    if not _HAS_STREAMLIT:
-        return
-
-    # --------------------------------------------------------------------------
-    # Initialize Session State
-    # --------------------------------------------------------------------------
     presets = service.get_presets()
     default_preset = "Pomodoro (25m)"
     default_duration = presets[default_preset]
@@ -56,40 +39,29 @@ def render() -> None:
     init_session_state("focus_is_paused", False)
     init_session_state("focus_completed_banner", None)
 
-    # --------------------------------------------------------------------------
-    # Check Completion Trigger
-    # --------------------------------------------------------------------------
     remaining = get_session_state("focus_remaining_seconds", default_duration)
     is_running = get_session_state("focus_is_running", False)
     initial_duration = get_session_state("focus_duration_seconds", default_duration)
     current_preset = get_session_state("focus_selected_preset", default_preset)
 
     if is_running and remaining <= 0:
-        # Save completed session to local SQLite database
         service.record_completed_session(current_preset, initial_duration)
-
-        # Reset timer state
         set_session_state("focus_is_running", False)
         set_session_state("focus_is_paused", False)
         set_session_state("focus_remaining_seconds", initial_duration)
         set_session_state("focus_completed_banner", f"🎉 Focus session '{current_preset}' completed and saved to history!")
         st.rerun()
 
-    # Display completion banner if set
     banner_msg = get_session_state("focus_completed_banner")
     if banner_msg:
         render_alert(banner_msg, alert_type="success")
         set_session_state("focus_completed_banner", None)
 
-    # --------------------------------------------------------------------------
-    # Layout: Timer Control (Left) & Configuration / Stats (Right)
-    # --------------------------------------------------------------------------
     col_timer, col_config = st.columns([3, 2], gap="large")
 
     with col_timer:
         render_section("Active Session")
 
-        # Determine timer status label
         is_paused = get_session_state("focus_is_paused", False)
         if is_running:
             badge_html = render_status_badge("Running", status="success")
@@ -98,7 +70,6 @@ def render() -> None:
         else:
             badge_html = render_status_badge("Ready", status="info")
 
-        # Styled Digital Timer Display
         time_str = format_duration(remaining)
         progress_val = max(0.0, min(1.0, 1.0 - (remaining / initial_duration))) if initial_duration > 0 else 0.0
 
@@ -119,7 +90,6 @@ def render() -> None:
 
         st.progress(progress_val)
 
-        # Timer Action Buttons
         btn_col1, btn_col2, btn_col3 = st.columns([1, 1, 1])
 
         if not is_running and not is_paused:
@@ -129,8 +99,7 @@ def render() -> None:
                     set_session_state("focus_is_paused", False)
                     st.rerun()
             with btn_col2:
-                if st.button("↺ Reset", use_container_width=True, disabled=True):
-                    pass
+                st.button("↺ Reset", use_container_width=True, disabled=True)
         elif is_running:
             with btn_col1:
                 if st.button("⏸ Pause", use_container_width=True):
@@ -159,7 +128,6 @@ def render() -> None:
     with col_config:
         render_section("Timer Configuration")
 
-        # Preset selection (disabled while actively running)
         preset_names = list(presets.keys()) + ["Custom Interval"]
         selected = st.selectbox(
             "Select Interval Preset",
@@ -191,7 +159,6 @@ def render() -> None:
                 set_session_state("focus_remaining_seconds", preset_seconds)
                 st.rerun()
 
-        # Session Metrics Card
         stats = service.get_session_stats()
         st.markdown("<div style='margin-top: 1.5rem;'></div>", unsafe_allow_html=True)
         render_card(
@@ -202,9 +169,6 @@ def render() -> None:
             status="success",
         )
 
-    # --------------------------------------------------------------------------
-    # Recent Session History
-    # --------------------------------------------------------------------------
     st.markdown("<hr style='margin: 2rem 0; border-color: #334155;' />", unsafe_allow_html=True)
     render_section("Completed Session History")
 
@@ -220,7 +184,8 @@ def render() -> None:
         for idx, item in enumerate(history[:4]):
             with hist_cols[idx]:
                 dur_str = format_duration(item["duration_seconds"])
-                time_disp = format_timestamp(item["created_at"]) if hasattr(item["created_at"], "strftime") else str(item["created_at"])[:16]
+                created = item["created_at"]
+                time_disp = created.strftime("%Y-%m-%d %H:%M") if hasattr(created, "strftime") else str(created)[:16]
                 render_card(
                     title=item["session_name"],
                     value=dur_str,
@@ -228,9 +193,6 @@ def render() -> None:
                     status="info",
                 )
 
-    # --------------------------------------------------------------------------
-    # Active Countdown Ticking Step
-    # --------------------------------------------------------------------------
     if is_running and remaining > 0:
         time.sleep(1)
         set_session_state("focus_remaining_seconds", remaining - 1)

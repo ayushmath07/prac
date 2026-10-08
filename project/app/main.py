@@ -1,4 +1,4 @@
-"""Main entry point and application shell."""
+"""Main entry point and application shell for FocusFlow."""
 
 import sys
 from pathlib import Path

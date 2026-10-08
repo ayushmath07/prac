@@ -1,4 +1,4 @@
-"""Shared UI components and layout helpers."""
+"""Shared reusable UI components and layout helpers."""
 
 from typing import Callable, Optional
 import streamlit as st
@@ -81,3 +81,21 @@ def render_error(title: str, message: str, details: Optional[str] = None) -> Non
     </div>
     """
     st.markdown(html, unsafe_allow_html=True)
+
+
+def render_section(title: str, description: Optional[str] = None) -> None:
+    st.subheader(title)
+    if description:
+        st.caption(description)
+
+
+def render_alert(message: str, alert_type: str = "info") -> None:
+    """Render an informational, success, warning, or error notification banner."""
+    if alert_type == "success":
+        st.success(message)
+    elif alert_type == "warning":
+        st.warning(message)
+    elif alert_type in ("danger", "error"):
+        st.error(message)
+    else:
+        st.info(message)

@@ -16,7 +16,7 @@ DATABASE_URL = os.getenv("DATABASE_URL", f"sqlite:///{DEFAULT_DB_FILE.as_posix()
 @dataclass(frozen=True)
 class AppConfig:
     app_name: str = "FocusFlow"
-    app_tagline: str = "Single-Surface Local Productivity Dashboard"
+    app_tagline: str = "Lightweight Single-Surface Productivity Dashboard"
     app_version: str = "0.1.0"
 
     base_dir: Path = BASE_DIR
